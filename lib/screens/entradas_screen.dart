@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import '../services/api_service.dart';
 
 class EntradasScreen extends StatefulWidget {
   const EntradasScreen({super.key});
@@ -15,12 +15,28 @@ class _EntradasScreenState extends State<EntradasScreen> {
   bool _isLoading = false;
 
   Future<void> _handleEntrada() async {
-    final idProducto = _idProductoController.text.trim();
-    final cantidad = _cantidadController.text.trim();
+    final idProductoTexto = _idProductoController.text.trim();
+    final cantidadTexto = _cantidadController.text.trim();
 
-    if (idProducto.isEmpty || cantidad.isEmpty) {
+    if (idProductoTexto.isEmpty || cantidadTexto.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor completa todos los campos')),
+      );
+      return;
+    }
+
+    final idProducto = int.tryParse(idProductoTexto);
+    final cantidad = int.tryParse(cantidadTexto);
+
+    if (idProducto == null || cantidad == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ID de producto y cantidad deben ser números enteros')),
+      );
+      return;
+    }
+    if (cantidad <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('La cantidad debe ser mayor que cero')),
       );
       return;
     }
@@ -28,17 +44,13 @@ class _EntradasScreenState extends State<EntradasScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await http.post(
-        Uri.parse('http://192.168.1.43:5000/productos/entrada'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'id_producto': int.parse(idProducto),
-          'cantidad': int.parse(cantidad),
-        }),
-      );
+      final response = await ApiService.post('/productos/entrada', {
+        'id_producto': idProducto,
+        'cantidad': cantidad,
+      });
+      if (!mounted) return;
 
       final data = jsonDecode(response.body);
-
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['mensaje'] ?? 'Entrada registrada con éxito')),
@@ -51,11 +63,12 @@ class _EntradasScreenState extends State<EntradasScreen> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error de conexión: $e')),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

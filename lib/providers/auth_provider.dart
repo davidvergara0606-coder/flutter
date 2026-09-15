@@ -1,19 +1,17 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import '../models/usuario_model.dart';
+import '../services/api_service.dart';
 
 class AuthProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
-  Map<String, dynamic>? _userData;
+  Usuario? _usuario;
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  Map<String, dynamic>? get userData => _userData;
-  bool get isAuthenticated => _userData != null;
-  
-  // Nuevo getter para extraer el rol fácilmente
-  String? get rolUsuario => _userData?['rol']; 
+  Usuario? get usuario => _usuario;
+  bool get isAuthenticated => _usuario != null;
 
   Future<bool> login(String documento, String password) async {
     _isLoading = true;
@@ -21,21 +19,29 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final url = Uri.parse('http://192.168.1.43:5000/auth/login');
-      
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'documento': documento,
-          'password': password,
-        }),
-      );
+      final response = await ApiService.post('/auth/login', {
+        'documento': documento,
+        'password': password,
+      });
+
+      final bodyTrimmed = response.body.trim().toLowerCase();
+      if (bodyTrimmed.startsWith('<!doctype') || bodyTrimmed.startsWith('<html')) {
+        _errorMessage = 'El servidor devolvió HTML en vez de JSON (Código: ${response.statusCode}). Revisa que la IP, el puerto y la ruta de la API sean correctos.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        _userData = data;
+        _usuario = Usuario(
+          documento: data['id'].toString(),
+          primerNombre: data['usuario'] ?? '',
+          primerApellido: '',
+          correo: '',
+          idRol: int.tryParse(data['id_rol'].toString()) ?? 0,
+        );
         _isLoading = false;
         notifyListeners();
         return true;
@@ -54,7 +60,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   void logout() {
-    _userData = null;
+    _usuario = null;
     notifyListeners();
   }
 }

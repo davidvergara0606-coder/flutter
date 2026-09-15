@@ -26,32 +26,36 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (documento.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, ingresa tu documento y contraseña.')),
+        const SnackBar(
+            content: Text('Por favor, ingresa tu documento y contraseña.')),
       );
       return;
     }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
     bool success = await authProvider.login(documento, password);
+    if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('¡Bienvenido, ${authProvider.userData?['usuario'] ?? ''}!')),
+      messenger.showSnackBar(
+        SnackBar(
+            content: Text(
+                '¡Bienvenido, ${authProvider.usuario?.primerNombre ?? ''}!')),
       );
-      
-      // Enrutamiento condicional basado en el rol del usuario
-      if (authProvider.rolUsuario == 'admin') {
-        Navigator.pushReplacementNamed(context, '/dashboard');
-      } else if (authProvider.rolUsuario == 'bodeguero') {
-        Navigator.pushReplacementNamed(context, '/dashboardBodega');
+
+      if (authProvider.usuario?.esBodeguero == true) {
+        navigator.pushReplacementNamed('/dashboard_bodega');
       } else {
-        // Opción por defecto si el rol no coincide exactamente
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        navigator.pushReplacementNamed('/dashboard');
       }
-      
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authProvider.errorMessage ?? 'Error al iniciar sesión')),
+      messenger.showSnackBar(
+        SnackBar(
+            content: Text(
+                authProvider.errorMessage ?? 'Error al iniciar sesión')),
       );
     }
   }
@@ -70,7 +74,10 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const Text(
                   'Harvic',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2),
+                  style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -99,7 +106,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: authProvider.isLoading ? null : () => _handleLogin(context),
+                  onPressed:
+                      authProvider.isLoading ? null : () => _handleLogin(context),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(50),
                     backgroundColor: Colors.white,
@@ -107,7 +115,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: authProvider.isLoading
                       ? const CircularProgressIndicator(color: Colors.black)
-                      : const Text('Ingresar', style: TextStyle(fontWeight: FontWeight.bold)),
+                      : const Text('Ingresar',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             ),

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import '../models/producto_model.dart';
+import '../services/api_service.dart';
 
 class AlertasStockScreen extends StatefulWidget {
   const AlertasStockScreen({super.key});
@@ -10,7 +11,7 @@ class AlertasStockScreen extends StatefulWidget {
 }
 
 class _AlertasStockScreenState extends State<AlertasStockScreen> {
-  List<dynamic> _alertas = [];
+  List<Producto> _alertas = [];
   bool _isLoading = true;
 
   @override
@@ -21,15 +22,19 @@ class _AlertasStockScreenState extends State<AlertasStockScreen> {
 
   Future<void> _fetchAlertas() async {
     try {
-      final response = await http.get(Uri.parse('http://192.168.1.43:5000/productos/alertas'));
+      final response = await ApiService.get('/productos/alertas');
+      if (!mounted) return;
       if (response.statusCode == 200) {
+        final List<dynamic> lista = jsonDecode(response.body);
         setState(() {
-          _alertas = jsonDecode(response.body);
+          _alertas = lista.map((json) => Producto.fromJson(json)).toList();
           _isLoading = false;
         });
+      } else {
+        setState(() => _isLoading = false);
       }
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -47,13 +52,13 @@ class _AlertasStockScreenState extends State<AlertasStockScreen> {
                     final p = _alertas[index];
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      color: Colors.redAccent.withOpacity(0.15),
+                      color: Colors.redAccent.withValues(alpha: 0.15),
                       child: ListTile(
                         leading: const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 32),
-                        title: Text(p['nombre'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('Código: ${p['codigo']} | Stock Mínimo: ${p['stock_minimo']}'),
+                        title: Text(p.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text('Código: ${p.codigo} | Stock Mínimo: ${p.stockMinimo}'),
                         trailing: Text(
-                          'Stock: ${p['stock_actual']}',
+                          'Stock: ${p.stockActual}',
                           style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                       ),

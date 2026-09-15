@@ -6,7 +6,7 @@ class DashboardBodegaScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Panel de Bodega - Harvic')),
+      appBar: AppBar(title: const Text('Panel de Bodega - ZoundInventory')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -17,12 +17,12 @@ class DashboardBodegaScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/salidas'),
+              onPressed: () => Navigator.pushNamed(context, '/salidas_form'),
               child: const Text('Registrar Salidas'),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/alertas'),
+              onPressed: () => Navigator.pushNamed(context, '/alertas_stock'),
               child: const Text('Alertas de Stock'),
             ),
           ],

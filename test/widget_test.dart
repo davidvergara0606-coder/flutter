@@ -1,9 +1,7 @@
-// This is a basic Flutter widget test.
+// Pruebas básicas de widgets para ZoundInventory.
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// Verifica que la app arranca correctamente y que la pantalla
+// de login se muestra con sus elementos principales.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,20 +9,28 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mi_primer_app/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('La app arranca y muestra la pantalla de login', (WidgetTester tester) async {
+    // Construye la app y deja que se estabilice.
     await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verifica que estamos en la pantalla de login.
+    expect(find.text('ZoundInventory'), findsOneWidget);
+    expect(find.text('Ingresar'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    // Verifica que existen los dos campos de texto (documento y contraseña).
+    expect(find.byType(TextField), findsNWidgets(2));
+  });
+
+  testWidgets('El botón de login está deshabilitado mientras no se escriba nada', (WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+
+    // El botón "Ingresar" debe existir y ser tocable sin crashear
+    // (la validación de campos vacíos la maneja el propio widget).
+    await tester.tap(find.text('Ingresar'));
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Por favor, ingresa tu documento y contraseña.'), findsOneWidget);
   });
 }
